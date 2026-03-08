@@ -1,0 +1,65 @@
+/* Container for the stone and its label */
+.stone-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin: 15px;
+  position: relative;
+  user-select: none;
+}
+
+/* Hover effect to make it feel interactive */
+.stone-container:hover {
+  filter: brightness(1.1);
+  z-index: 10;
+}
+
+.stone-container:hover .stone-shape {
+  box-shadow: 6px 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* The physical "stone" appearance */
+.stone-shape {
+  width: 70px;
+  height: 90px;
+  /* A radial gradient to simulate depth/lighting */
+  background: radial-gradient(circle at 35% 35%, #e6d8b9, #bcab89 70%, #8b7d60);
+  border-radius: 42% 58% 52% 48% / 45% 45% 55% 55%; /* Irregular "tumbled" shape */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 5px 8px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(139, 115, 85, 0.3);
+  position: relative;
+}
+
+/* The Rune Symbol itself */
+.rune-symbol {
+  font-size: 2.2rem;
+  color: #3d2b1f;
+  font-weight: bold;
+  /* Makes the rune look "etched" into the stone */
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.2), -1px -1px 1px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+}
+
+/* Merkstave (Reversed) state */
+.rune-symbol.inverted {
+  transform: rotate(180deg);
+}
+
+/* The name of the stone below it */
+.stone-label {
+  margin-top: 12px;
+  font-family: 'Cinzel', serif; /* Or 'Courier New' if you haven't added the font yet */
+  font-size: 0.75rem;
+  color: #d2b48c;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.8;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
