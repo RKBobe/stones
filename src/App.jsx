@@ -1,69 +1,156 @@
-import React, { useState } from 'react';
-import './App.css';
-import { castRunes } from './utils/cast';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import RuneStone from './components/RuneStone';
+import { castRunes } from './utils/cast';
+import { getOverallVibe } from './utils/interpreter';
+import './App.css';
 
-function App() {
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`;
+
+const App = () => {
   const [currentCast, setCurrentCast] = useState([]);
   const [selectedStone, setSelectedStone] = useState(null);
+  const [isJournalOpen, setIsJournalOpen] = useState(false);
+  const [aiCounsel, setAiCounsel] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('rune_journal') || '[]');
+    setHistory(saved);
+  }, []);
+
+  const playTossSound = (count) => {
+    const fileName = count === 1 ? '1rock.wav' : count === 5 ? '5rock.wav' : '2rock2.wav';
+    const audio = new Audio(`/sounds/${fileName}`);
+    audio.volume = 0.7;
+    audio.play().catch(e => console.warn("Audio blocked: Click page first."));
+  };
 
   const handleCast = (num) => {
-    // Reset selection and generate new stones
-    setSelectedStone(null);
+    setAiCounsel(""); // Reset AI
+    playTossSound(num); // Play Sound
     const results = castRunes(num);
     setCurrentCast(results);
   };
 
+  const seekAiCounsel = async () => {
+    if (currentCast.length === 0) return;
+    setIsAiLoading(true);
+    
+    const context = prompt("What is your question?") || "General guidance";
+    const runeString = currentCast.map((s, i) => `${s.name} (${s.isInverted ? 'Rev' : 'Up'}): ${s.meaning}`).join(", ");
+    
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Interpret: ${runeString}. Question: ${context}. 3 sentences.` }]}]
+        })
+      });
+      const data = await response.json();
+      setAiCounsel(data.candidates[0].content.parts[0].text);
+    } catch (err) {
+      setAiCounsel("The Seer is silent...");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const saveToJournal = () => {
+    const newEntry = {
+      id: Date.now(),
+      date: new Date().toLocaleString(),
+      stones: [...currentCast],
+      aiInterpretation: aiCounsel,
+      vibe: getOverallVibe(currentCast)
+    };
+    const updated = [newEntry, ...history];
+    setHistory(updated);
+    localStorage.setItem('rune_journal', JSON.stringify(updated));
+    alert("Saved.");
+  };
+
   return (
     <div className="app-container">
-      <header>
-        <h1>ᛒᛟᛟᚱᛞ STONES ᚱᚢᚾᛖᛋ</h1>
-        <p>Focus on your question, then cast the stones.</p>
+      <header className="shrine-header">
+        <h1 className="logo">ᛒᛟᛟᚱᛞ STONES</h1>
+        <button className="journal-toggle" onClick={() => setIsJournalOpen(true)}>📜 JOURNAL</button>
       </header>
 
-      <main className="casting-cloth">
-        {currentCast.length > 0 ? (
-          <div className="stones-layout">
+      <main className="cloth-container">
+        <div className="casting-cloth">
+           <AnimatePresence>
             {currentCast.map((stone, index) => (
-              <RuneStone 
-                key={`${stone.id}-${index}`} 
-                stone={stone} 
-                onSelect={setSelectedStone} 
-              />
+              <RuneStone key={stone.id} stone={stone} index={index} onSelect={setSelectedStone} />
             ))}
-          </div>
-        ) : (
-          <div className="empty-cloth">
-            <p>The cloth is empty...</p>
-          </div>
+          </AnimatePresence>
+          {currentCast.length === 0 && <p className="whisper">The cloth is empty...</p>}
+        </div>
+
+        {/* This ONLY shows if stones are present */}
+        {currentCast.length > 0 && !isAiLoading && (
+          <motion.div 
+            className="interpretation-overlay"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="vibe-text">{getOverallVibe(currentCast)}</div>
+            {aiCounsel && <div className="ai-prophecy">{aiCounsel}</div>}
+            
+            <div className="button-group">
+              {!aiCounsel && <button onClick={seekAiCounsel}>SEEK COUNSEL</button>}
+              <button onClick={saveToJournal}>SAVE READING</button>
+              <button onClick={() => setCurrentCast([])}>CLEAR</button>
+            </div>
+          </motion.div>
         )}
+        
+        {isAiLoading && <div className="loading-spinner">The Norns are weaving...</div>}
       </main>
 
-      <section className="controls">
-        <button onClick={() => handleCast(1)}>Single Stone</button>
-        <button onClick={() => handleCast(3)}>Three Norns (Past/Present/Future)</button>
-        <button onClick={() => handleCast(5)}>Celtic Cross</button>
-      </section>
+      <footer className="controls">
+        <button onClick={() => handleCast(1)}>1 STONE</button>
+        <button onClick={() => handleCast(3)}>3 NORNS</button>
+        <button onClick={() => handleCast(5)}>5 ELEMENTS</button>
+      </footer>
 
-      {/* Interpretation Modal */}
-      {selectedStone && (
-        <div className="modal-overlay" onClick={() => setSelectedStone(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <span className="modal-symbol">{selectedStone.symbol}</span>
-            <h2>{selectedStone.name} {selectedStone.isInverted ? '(Merkstave)' : ''}</h2>
-            <h3>{selectedStone.meaning}</h3>
-            <hr />
-            <p className="description">
-              {selectedStone.isInverted && selectedStone.merkstave 
-                ? selectedStone.merkstave 
-                : selectedStone.essence}
-            </p>
-            <button className="close-btn" onClick={() => setSelectedStone(null)}>Close</button>
-          </div>
-        </div>
-      )}
+      {/* --- JOURNAL OVERLAY --- */}
+      <AnimatePresence>
+        {isJournalOpen && (
+          <motion.div className="journal-fullview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="journal-inner">
+              <div className="journal-header-row">
+                <h2>CHRONICLES</h2>
+                <button onClick={() => setIsJournalOpen(false)}>CLOSE</button>
+              </div>
+              <div className="journal-entries">
+                {history.map(entry => (
+                  <div key={entry.id} className="journal-card">
+                    <div className="card-header">{entry.date} — {entry.vibe}</div>
+                    <div className="card-stones">
+                      {entry.stones.map((s, i) => (
+                        <div key={i} className="stone-entry">
+                          <span className={`symbol ${s.isInverted ? 'rev' : ''}`}>{s.symbol}</span>
+                          <div className="details">
+                            <strong>{s.name}</strong>
+                            <p>{s.meaning}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {entry.aiInterpretation && <div className="card-ai">"{entry.aiInterpretation}"</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-}
+};
 
 export default App;

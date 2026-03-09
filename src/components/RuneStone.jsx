@@ -1,18 +1,27 @@
 import React from 'react';
-import './RuneStone.css'; // We'll define the styles below
+import { motion } from 'framer-motion';
+import './RuneStone.css';
 
-const RuneStone = ({ stone, onSelect }) => {
+const RuneStone = ({ stone, onSelect, index }) => {
   const { symbol, name, isInverted, layout } = stone;
 
-  // Inline styles for the randomized "scatter" effect
-  const stoneStyle = {
-    transform: `rotate(${layout.rotation}deg) translate(${layout.offsetX}px, ${layout.offsetY}px)`,
-  };
-
   return (
-    <div 
-      className="stone-container" 
-      style={stoneStyle} 
+    <motion.div 
+      className="stone-container"
+      initial={{ scale: 0, opacity: 0, y: -200 }} // Drop from top
+      animate={{ 
+        scale: 1, 
+        opacity: 1, 
+        y: layout.offsetY, 
+        x: layout.offsetX,
+        rotate: layout.rotation 
+      }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 260, 
+        damping: 20, 
+        delay: index * 0.2 // Stones drop one after another
+      }}
       onClick={() => onSelect(stone)}
     >
       <div className="stone-shape">
@@ -21,8 +30,7 @@ const RuneStone = ({ stone, onSelect }) => {
         </span>
       </div>
       <p className="stone-label">{name}</p>
-    </div>
+    </motion.div>
   );
 };
-
 export default RuneStone;
