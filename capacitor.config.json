@@ -1,0 +1,8 @@
+{
+	"appId": "com.khai.runestones",
+	"appName": "Rune Stones",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}

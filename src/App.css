@@ -22,7 +22,25 @@ body {
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid #332a21;
+}
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.upgrade-mini-btn {
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 /* --- THE CLOTH --- */
@@ -30,29 +48,31 @@ body {
   flex: 1;
   position: relative;
   width: 100%;
+  height: 60vh;
   /* This creates the dark, moody background */
   background: #0f0c0a; 
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   min-height: 500px; /* Forces it to have height */
 }
 
 .casting-cloth {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  max-width: 1000px;
-  max-height: 600px;
+  position: absolute;
+  width: 90vw;
+  height: 90vw;
+  max-width: 500px;
+  max-height: 500px;
   /* This creates the actual "cloth" circle in the center */
-  background: radial-gradient(circle, #19076d 0%, #493b2d 70%, transparent 100%);
+  background: radial-gradient(circle, #241d18, #1a1612 70%, transparent 100%);
   border-radius: 50%; /* Makes the cloth circular */
   box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   border: 1px solid rgba(210, 180, 140, 0.05); /* Subtle edge */
+  z-index: 1;
 }
 
 .whisper { opacity: 0.3; letter-spacing: 3px; }
@@ -126,3 +146,93 @@ body {
 .symbol.rev { transform: rotate(180deg); color: #8b7355; }
 .details strong { font-size: 0.9rem; color: var(--text); }
 .details p { font-size: 0.75rem; color: #a09080; margin: 0; }
+
+/* --- PAYWALL MODAL --- */
+.paywall-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.paywall-card {
+  background: #1a1612;
+  border: 2px solid var(--gold);
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  max-width: 400px;
+  box-shadow: 0 0 30px rgba(210, 180, 140, 0.2);
+}
+
+.paywall-card h2 {
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-top: 0;
+}
+
+.paywall-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.paywall-card li {
+  margin: 10px 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.upgrade-button {
+  background: var(--gold) !important;
+  color: var(--bg) !important;
+  font-weight: bold;
+  width: 100%;
+  padding: 15px !important;
+  border: none !important;
+  cursor: pointer;
+  letter-spacing: 1px;
+  margin-top: 10px;
+  transition: transform 0.2s;
+}
+
+.upgrade-button:active {
+  transform: scale(0.95);
+}
+
+.close-link {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  opacity: 0.5;
+  margin-top: 15px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.8rem;
+}
+
+/* --- LOCK ICON STYLING --- */
+.lock-btn {
+  opacity: 0.6;
+  border-style: dashed !important;
+  position: relative;
+}
+
+.pro-banner {
+  background: var(--gold);
+  color: var(--bg);
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-bottom: 20px;
+}

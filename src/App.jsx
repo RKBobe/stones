@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RuneStone from './components/RuneStone';
+import PremiumGate from './components/PremiumGate';
 import { castRunes } from './utils/cast';
 import { getOverallVibe } from './utils/interpreter';
 import './App.css';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`;
+const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/9B614n8uy82kemv2WZ3VC01"; 
 
 const App = () => {
   const [currentCast, setCurrentCast] = useState([]);
+  // Tracks if the user has upgraded
+  const [isPro, setIsPro] = useState(() => localStorage.getItem('is_seer_pro') === 'true');
+  // Controls the visibility of the Paywall
+  const [showPaywall, setShowPaywall] = useState(false);
   const [selectedStone, setSelectedStone] = useState(null);
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [aiCounsel, setAiCounsel] = useState("");
@@ -36,6 +42,12 @@ const App = () => {
   };
 
   const seekAiCounsel = async () => {
+    // --- THE GATE ---
+    if (!isPro) {
+      setShowPaywall(true);
+      return;
+    }
+
     if (currentCast.length === 0) return;
     setIsAiLoading(true);
     
@@ -60,6 +72,13 @@ const App = () => {
   };
 
   const saveToJournal = () => {
+    // --- THE GATE ---
+    // Allow 3 free saves, then require Pro
+    if (!isPro && history.length >= 3) {
+      setShowPaywall(true);
+      return;
+    }
+
     const newEntry = {
       id: Date.now(),
       date: new Date().toLocaleString(),
@@ -73,11 +92,23 @@ const App = () => {
     alert("Saved.");
   };
 
+  const handleUpgrade = () => {
+    // For production/Stripe: window.location.href = STRIPE_CHECKOUT_URL;
+    // For now, let's simulate a success for testing:
+    localStorage.setItem('is_seer_pro', 'true');
+    setIsPro(true);
+    setShowPaywall(false);
+    alert("Welcome, Seer. The mysteries are now yours.");
+  };
+
   return (
     <div className="app-container">
       <header className="shrine-header">
         <h1 className="logo">ᛒᛟᛟᚱᛞ STONES</h1>
-        <button className="journal-toggle" onClick={() => setIsJournalOpen(true)}>📜 JOURNAL</button>
+        <div className="header-actions">
+          {!isPro && <button className="upgrade-mini-btn" onClick={() => setShowPaywall(true)}>UPGRADE 🔒</button>}
+          <button className="journal-toggle" onClick={() => setIsJournalOpen(true)}>📜 JOURNAL</button>
+        </div>
       </header>
 
       <main className="cloth-container">
@@ -117,21 +148,41 @@ const App = () => {
         <button onClick={() => handleCast(5)}>5 ELEMENTS</button>
       </footer>
 
+      <PremiumGate 
+        isOpen={showPaywall} 
+        onClose={() => setShowPaywall(false)} 
+        onUpgrade={handleUpgrade} 
+      />
+
       {/* --- JOURNAL OVERLAY --- */}
       <AnimatePresence>
         {isJournalOpen && (
-          <motion.div className="journal-fullview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div 
+            className="journal-fullview" 
+            initial={{ x: '100%' }} 
+            animate={{ x: 0 }} 
+            exit={{ x: '100%' }}
+            style={{ zIndex: 2000 }}
+          >
             <div className="journal-inner">
               <div className="journal-header-row">
                 <h2>CHRONICLES</h2>
                 <button onClick={() => setIsJournalOpen(false)}>CLOSE</button>
               </div>
+              
+              {!isPro && (
+                <div className="pro-banner" onClick={() => setShowPaywall(true)}>
+                  UPGRADE TO SEER FOR INFINITE HISTORY 🔒
+                </div>
+              )}
+
               <div className="journal-entries">
+                {history.length === 0 && <p className="whisper" style={{ textAlign: 'center', marginTop: '40px' }}>Your chronicles are empty...</p>}
                 {history.map(entry => (
                   <div key={entry.id} className="journal-card">
                     <div className="card-header">{entry.date} — {entry.vibe}</div>
                     <div className="card-stones">
-                      {entry.stones.map((s, i) => (
+                      {entry.stones && entry.stones.map((s, i) => (
                         <div key={i} className="stone-entry">
                           <span className={`symbol ${s.isInverted ? 'rev' : ''}`}>{s.symbol}</span>
                           <div className="details">

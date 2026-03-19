@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rune Stones</string>
+    <string name="title_activity_main">Rune Stones</string>
+    <string name="package_name">com.khai.runestones</string>
+    <string name="custom_url_scheme">com.khai.runestones</string>
+</resources>
